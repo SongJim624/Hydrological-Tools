@@ -1,6 +1,8 @@
-#ifndef _SC_PDSI_
-#define _SC_PDSI_
-class PDSI
+#ifndef _HYDROLOGICAL_TOOLS_PALMER_DROUGHT_SEVERITY INDEX_SC_PDSI_
+#define _HYDROLOGICAL_TOOLS_PALMER_DROUGHT_SEVERITY INDEX_SC_PDSI_
+
+#include <list>
+class SCPDSI
 {
 private:
 //actual value
@@ -18,7 +20,10 @@ private:
     double Calibration();
 
 public:
-    PDSI();
-    double SC_PDSI()
+    SCPDSI(const char* records);
+    SCPDSI(const std::list<double>& P, const std::list<double>& PET);
+
+    std::list<double> Weekly(const std::list<double>& P, const std::list<double>& PET);
+    std::list<double> Monthly(const std::list<double>& AWC);
 };
-#endif //!_SC_PDSI_
+#endif //!_HYDROLOGICAL_TOOLS_PALMER_DROUGHT_SEVERITY INDEX_SC_PDSI_
