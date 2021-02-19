@@ -1,0 +1,13 @@
+global Ks;
+global thitas;
+global thitai;
+global sf;
+thitas=0.35;
+thitai=0.08;
+Ks=1;
+sf=0.05;
+t=0:0.1:1;
+H=0.20;
+Z=GreAmpt(t,H);
+Q=Z*(0.35-0.08);
+i=Ks*(sf+Z+H)./Z;
