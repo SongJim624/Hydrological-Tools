@@ -83,7 +83,7 @@ void main()
     Boundary* upper = new First(0, -2.0f);
     Boundary* lower = new First(soil->size(), -3500.0f);
 
-    Sink* sink = new NoSink();
+    Sink* sink = new Sink();
 
     float* h = new float[soil->size()];
     float* theta = new float[soil->size()];
