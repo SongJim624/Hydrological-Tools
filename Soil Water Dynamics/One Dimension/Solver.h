@@ -33,6 +33,7 @@ public:
 
     bool Solve(float* h, float* theta0, const float& dt,
         Sink* sink, Boundary* upper, Boundary* lower);
+    void Flux(const float& theta0, const float& dt, float* flux);
 };
 
 #endif // !_HYDROLOGICAL_TOOLS_SOIL_WATER_DYNAMICS_ONE_DIMENSION_SOLVER_

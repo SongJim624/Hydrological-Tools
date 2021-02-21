@@ -1,8 +1,8 @@
 #include "Boundary.h"
 
-Boundary::Boundary()
+Boundary::Boundary(const long& length)
     : h(nullptr), capacity(nullptr), conductivity(nullptr), 
-    theta(nullptr), theta0(nullptr), sink(nullptr){}
+    theta(nullptr), theta0(nullptr), sink(nullptr), length(length){}
 
 Boundary::~Boundary()
 {
@@ -20,70 +20,54 @@ void Boundary::Attach(float* h, float* capacity, float* conductivity,
     this->theta0 = theta0 == this->theta0 ? this->theta0 : theta0;
     this->sink = sink == this->sink ? this->sink : sink;
 }
-/*
-float Evporation(const float& Kex, const float& ETo, const float& CC,
-    const float &h, const float& hc, const float& hcc)
-{
-//The unit of the ETo is mm, and theresult should be changed to cm in this process
-    if (h > hc)
-    {
-        return  ETo * Kex * (1 - CC) / 240;
-    }
-    else
-    {
-        return ETo * max(0, log(hcc / h) / log(hcc / hc)) / 240;
-    }
-}
 
-//first
-inline void Upper(const float& h, Tridiagonal& A, float* f)
+First::First(const long& length, const float& head)
+    : Boundary(length), head(head){}
+
+void First::Upper(Tridiagonal& A, float* f, const float& dt)
 {
     A(0, 0) = 1;
-    f[0] = h;
+    f[0] = head;
 
-    f[1] -= f[0] * matrix(1, 0);
+    f[1] -= f[0] * A(1, 0);
     A(1, 0) = 0;
 }
 
-//second
-inline void Upper(const float& flux, float* ks, const float& cap, const float& theta,
-    const float& theta0, const float& sink, const float &dt, Triangle& A, float* f)
-{
-    A(0, 0) = 0.5 * (cap + dt * (ks[0] + ks[1]));
-    A(0, 1) = -0.5 * (ks[0] + ks[1]) * dt;
-    f[0] = 0.5 * (h[0] * cap - (theta - theta0) - dt * (ks[1] + ks[0]))
-        + flux * dt - 0.5 * sink[0] * dt;
-}
-
-void Upper_Third()
-{
-
-}
-
-//first
-inline void Lower(const float& h, const long& length, Triangle& A, float* f)
+void First::Lower(Tridiagonal& A, float* f, const float& dt)
 {
     A(length - 1, length - 1) = 1;
-    f[length - 1] = h;
+    f[length - 1] = head;
 
     f[length - 2] -= f[length - 1] * A(length - 2, length - 1);
     A(length - 2, length - 1) = 0;
 }
 
-inline void Lower_Second()
+void First::Modify(Tridiagonal& A, float* f, const float& dt)
 {
-
+    length == 0 ? Upper(A, f, dt) : Lower(A, f, dt);
 }
 
-inline void Lower_Third()
-{
+Second::Second(const long& length, const float& flux)
+    : Boundary(length), flux(flux) {}
 
+void Second::Upper(Tridiagonal& A, float* f, const float& dt)
+{
+    A(0, 0) = 0.5 * (capacity[0] + dt * (conductivity[0] + conductivity[1]));
+    A(0, 1) = -0.5 * (conductivity[0] + conductivity[1]) * dt;
+
+    f[0] = 0.5 * (h[0] * capacity[0] - (theta[0] - theta0[0]) - dt * (conductivity[1] + conductivity[0]))
+        + flux * dt - 0.5 * sink[0] * dt;
+}
+//Here need the further modify
+void Second::Lower(Tridiagonal& A, float* f, const float& dt)
+{
+    A(length - 1, length - 1) = 0.5 * dt * (conductivity[length - 1] + conductivity[length - 2]);
+    A(length - 1, length - 2) = -0.5 * (conductivity[length - 1] + conductivity[length - 2]) * dt;
+
+    f[length - 1] = 0.5 * dt * (conductivity[length - 1] + conductivity[length - 2]) + flux * dt;
 }
 
-inline void Free_Drainage(const long& length, Triangle& A, float* f)
+void Second::Modify(Tridiagonal& A, float* f, const float& dt)
 {
-    A(length - 1, length - 1) = -A(length - 2, length - 1);
-    A(length - 1, length - 2) = A(length - 2, length - 1);
-    f[length - 1] = 0;
+    length == 0 ? Upper(A, f, dt) : Lower(A, f, dt);
 }
-*/

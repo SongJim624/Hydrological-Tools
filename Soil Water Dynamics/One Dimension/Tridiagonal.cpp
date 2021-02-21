@@ -46,9 +46,7 @@ void Chasing(Tridiagonal& A, float* b, const long& length)
 {
     float* m = A.Diagonal(0);
     float* l = A.Diagonal(-1);
-
     float* u = A.Diagonal(1);
-
 
     for (size_t i = 1; i < length; ++i)
     {

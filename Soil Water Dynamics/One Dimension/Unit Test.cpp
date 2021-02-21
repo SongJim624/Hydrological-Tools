@@ -32,7 +32,7 @@ void main()
 	std::list<float> thetar{ 0.044f, 0.044f, 0.050f, 0.050f, 0.039f, 0.029f };
 	std::list<float> alpha{ 0.007f, 0.007f, 0.006f, 0.007f, 0.009f, 0.043f };
 	std::list<float> n{ 1.59f, 1.40f, 1.48f, 1.45f, 1.32f, 1.30f };
-	std::list<float> ksat{ 20.9f, 24.6f, 25.9f, 17.0f, 25.3f, 32.2f };
+	std::list<float> ksat{ 20.9f, 24.6f, 25.9f, 17.0f, 25.3f, 32.2f }; //ks might be a little big
 	std::list<float> hs(6, -2.0f);
 
     Soil* soil = new VGM(std::array<std::list<float>, 7>{compart, thetas, thetar, alpha, n, ksat, hs});
@@ -70,7 +70,7 @@ void main()
 
 void main()
 {
-    std::list<float> compart(6, 200.0f);
+    std::list<float> compart(6, 20.0f);
     std::list<float> thetas{ 0.360f, 0.370f,  0.376f, 0.375f, 0.371f, 0.370f };
     std::list<float> thetar{ 0.044f, 0.044f, 0.050f, 0.050f, 0.039f, 0.029f };
     std::list<float> alpha{ 0.007f, 0.007f, 0.006f, 0.007f, 0.009f, 0.043f };
@@ -80,13 +80,14 @@ void main()
 
     Soil* soil = new VGM(std::array<std::list<float>, 7>{compart, thetas, thetar, alpha, n, ksat, hs});
 
-    Boundary* upper = new FixUpper(-2);
-    Boundary* lower = new FixLower(-3500, soil->size());
+    Boundary* upper = new First(0, -2.0f);
+    Boundary* lower = new First(soil->size(), -3500.0f);
 
     Sink* sink = new NoSink();
 
     float* h = new float[soil->size()];
     float* theta = new float[soil->size()];
+    float* flux = new float[soil->size()];
 
     for (long i = 0; i < soil->size(); ++i)
     {
@@ -112,6 +113,8 @@ void main()
             dt *= 0.5;
         }
 
+        solver.Flux(theta[0], dt, flux);
+
         soil->theta(h, theta);
 
         for (long i = 0; i < soil->size(); ++i)
@@ -136,5 +139,6 @@ void main()
 
     delete[] theta;
     delete[] h;
+    delete[] flux;
 }
 #endif
