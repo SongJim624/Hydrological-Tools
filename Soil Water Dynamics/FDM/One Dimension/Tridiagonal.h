@@ -8,6 +8,8 @@ The structure of the matrix is :
     0, a, b, c
     0, 0, a, b
 */
+#include <math.h>
+
 class Tridiagonal
 {
 private:
@@ -21,7 +23,12 @@ public:
     float& operator ()(const long& r, const long& c);
     float* Diagonal(const int& offset = 0);
     long size();
+
+    void multiple(float * x, float * res);
 };
 
+
+
+float Norm(float* A, float* B, const long& length);
 void Chasing(Tridiagonal& A, float* f, const long& length);
 #endif // !_HYDROLOGICAL_TOOLS_SOIL_WATER_DYNAMICS_ONE_DIMENSION__TRIDIAGONAL_MATRIX_

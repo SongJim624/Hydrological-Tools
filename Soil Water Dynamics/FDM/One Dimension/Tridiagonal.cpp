@@ -42,6 +42,30 @@ long Tridiagonal::size()
     return length;
 }
 
+void Tridiagonal::multiple (float* x, float * res)
+{
+    res[0] = B[0] * x[0] + C[0] * x[1];
+
+    for(long i = 1; i < length - 1; ++i)
+    {
+        res[i] = A[i - 1] * x[i - 1] + B[i] * x[i] + C[i] * x[i + 1];
+    }
+
+    res[length - 1] = A[length - 2] * x[length - 2] + B[length - 1] * x[length - 1];
+}
+
+inline float Norm(float* A, float* B, const long& length)
+{
+    float norm = -INFINITY;
+
+    for (long i = 0; i < length; ++i)
+    {
+        norm = fmaxf(norm, fabsf((A[i] - B[i]) / B[i]));
+    }
+
+    return norm;
+}
+
 void Chasing(Tridiagonal& A, float* b, const long& length)
 {
     float* m = A.Diagonal(0);

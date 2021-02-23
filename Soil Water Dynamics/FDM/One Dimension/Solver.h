@@ -1,6 +1,9 @@
 #ifndef _HYDROLOGICAL_TOOLS_SOIL_WATER_DYNAMICS_ONE_DIMENSION_SOLVER_
 #define _HYDROLOGICAL_TOOLS_SOIL_WATER_DYNAMICS_ONE_DIMENSION_SOLVER_
 
+//Using the MKL to speed up the computation
+//#include <mkl.h>
+
 //for solving the equations
 #include "Tridiagonal.h"
 

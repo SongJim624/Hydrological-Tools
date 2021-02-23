@@ -1,21 +1,13 @@
 #include "Solver.h" 
 
-inline float Norm(float* A, float* B, const long& length)
-{
-    float norm = -INFINITY;
-
-    for (long i = 0; i < length; ++i)
-    {
-        norm = fmaxf(norm, abs((A[i] - B[i]) / B[i]));
-    }
-
-    return norm;
-}
-
 Solver::Solver(Soil* soil, const long& maxIter, const float& tol)
     : soil(soil), length(soil->size()), A(Tridiagonal(length)),
-    f(new float[length]), theta(new float[length]), capacity(new float[length]), 
-    conductivity(new float[length]), s(new float[length]), maxIter(maxIter), tol(tol){}
+    f(new float[length]), 
+    theta(new float[length]),
+    capacity(new float[length]),
+    conductivity(new float[length]),
+    s(new float[length]), maxIter(maxIter), tol(tol)
+{}
 
 Solver::~Solver()
 {
@@ -23,6 +15,7 @@ Solver::~Solver()
     delete[] theta;
     delete[] capacity;
     delete[] conductivity;
+
     delete[] s;
 }
 
@@ -48,6 +41,7 @@ bool Solver::Solve(float* h, float* theta0, const float &dt,
 
         for (size_t i = 1; i < length - 1; ++i)
         {
+
             A(i, i - 1) = -0.5 * dt * (conductivity[i - 1] + conductivity[i]);
             A(i, i + 1) = -0.5 * dt * (conductivity[i] + conductivity[i + 1]);
             A(i, i) = capacity[i] - A(i, i - 1) - A(i, i + 1);
