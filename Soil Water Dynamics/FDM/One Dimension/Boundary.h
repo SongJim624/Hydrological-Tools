@@ -19,7 +19,7 @@ protected:
     const long length;
 public:
     Boundary(const long& length = 0);
-    ~Boundary();
+   virtual  ~Boundary();
 
     virtual void Modify(Tridiagonal& A, float* f, const float& dt) = 0;
 

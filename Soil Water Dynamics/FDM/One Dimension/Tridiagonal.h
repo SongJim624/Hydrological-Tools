@@ -9,6 +9,22 @@ The structure of the matrix is :
     0, 0, a, b
 */
 #include <math.h>
+#include <mkl.h>
+#include <vector>
+
+class Vector
+{
+private:
+    const long length;
+    float* data;
+
+public:
+    Vector(const std::vector<float>& data);
+    Vector(const Vector& vec);
+    ~Vector();
+
+    float& operator [](const long& index);
+};
 
 class Tridiagonal
 {

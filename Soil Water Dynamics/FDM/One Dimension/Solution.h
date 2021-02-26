@@ -2,6 +2,12 @@
 #include "Tridiagonal.h"
 #include "Soil.h"
 
+struct Water
+{
+	float* theta;
+	float* flux;
+};
+
 class Solution
 {
 private:
@@ -14,9 +20,12 @@ private:
 
 	float * conductivity;
 
+private:
+	void Velocity(float* flux, float * theta, float* velocity);
 	void Flux(float * h, const float& dt, float * conductivity);
 
 public:
 	Solution(const long& legnth);
-	void Solve(Solute& solution, float* flux, float* theta, float* theta0, const float& dt);
+
+	void Solve(Solute& solution, Water& water_o, Water& water_n, const float& dt);
 };

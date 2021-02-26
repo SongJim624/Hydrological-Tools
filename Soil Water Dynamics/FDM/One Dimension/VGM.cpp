@@ -1,18 +1,29 @@
-#include "Soil.h"
+#include "Modified Van Genutchen.h"
 
 VGM::VGM(const std::array<std::list<float>, 7>& soil)
 {
 	length = 0;
-	
+
 	for (auto it : *soil.begin())
 	{
 		length += it;
 	}
 
-	m = new float[length];
-	thetam = new float[length];
-	inter = new float[length];
-	F1 = new float[length];
+	m = (float*)MKL_calloc(length, sizeof(float), 64);
+
+	inter = (float*)MKL_calloc(length, sizeof(float), 64);
+	F1 = (float*)MKL_calloc(length, sizeof(float), 64);
+	thetam = (float*)MKL_calloc(length, sizeof(float), 64);
+
+	positive_ones = (float*)MKL_calloc(length, sizeof(float), 64);
+	negative_ones = (float*)MKL_calloc(length, sizeof(float), 64);
+	temp = (float*)MKL_calloc(length, sizeof(float), 64);
+	
+	for (long i = 0; i < length; ++i)
+	{
+		positive_ones[i] = 1;
+		negative_ones[i] = -1;
+	}
 
 	label = new bool[length];
 
@@ -23,28 +34,46 @@ VGM::VGM(const std::array<std::list<float>, 7>& soil)
 	Convert(soil[0], soil[5], ksat);
 	Convert(soil[0], soil[6], hs);
 
-	for (size_t i = 0; i < length; ++i)
-	{
-		inter[i] = pow(-alpha[i] * hs[i], n[i]);
-		m[i] = 1 - 1 / n[i];
-		thetam[i] = (thetas[i] - thetar[i]) * pow(1 + inter[i], m[i]) + thetar[i];
-		F1[i] = pow(inter[i] / (1 + inter[i]), m[i]);
-	}
+// inter
+	vsMul(length, alpha, hs, inter);
+	vsMul(length, inter, negative_ones, inter);
+	vsPow(length, inter, n, inter);
+	
+// m
+	vsDiv(length, negative_ones, n, m);
+	vsAdd(length, positive_ones, m, m);
+
+// thetam
+	vsAdd(length, positive_ones, inter, thetam);
+	vsPow(length, thetam, m, thetam);
+	vsSub(length, thetas, thetar, temp);
+	vsMul(length, thetam, temp, thetam);
+	vsAdd(length, thetam, thetar, thetam);
+
+//F1
+	vsAdd(length, positive_ones, inter, F1);
+	vsDiv(length, inter, F1, F1);
+	vsPow(length, F1, m, F1);
+	vsSub(length, positive_ones, F1, F1);
 }
 
 VGM::~VGM()
 {
-	delete[] thetas;
-	delete[] thetar;
-	delete[] alpha;
-	delete[] n;
-	delete[] ksat;
-	delete[] hs;
+	MKL_free(thetas);
+	MKL_free(thetar);
+	MKL_free(alpha);
+	MKL_free(n);
+	MKL_free(ksat);
+	MKL_free(hs);
 
-	delete[] m;
-	delete[] thetam;
-	delete[] inter;
-	delete[] F1;
+	MKL_free(m);
+	MKL_free(thetam);
+	MKL_free(inter);
+	MKL_free(F1);
+
+	MKL_free(positive_ones);
+	MKL_free(negative_ones);
+	MKL_free(temp);
 
 	delete[] label;
 }
@@ -59,7 +88,7 @@ void VGM::Convert(const std::list<float>& compart, const std::list<float>& value
 		r.insert(r.end(), temp.begin(), temp.end());
 	}
 
-	res = new float[r.size()];
+	res = (float*) MKL_calloc(r.size(), sizeof(float), 64);
 	
 	for (long i = 0; i < r.size(); ++i)
 	{
@@ -69,28 +98,70 @@ void VGM::Convert(const std::list<float>& compart, const std::list<float>& value
 
 void VGM::theta(float * h, float * res)
 {
+	vsMul(length, alpha, h, inter);
+	vsMul(length, negative_ones, inter, inter);
+	vsPow(length, inter, n, inter);
+
+	vsMul(length, negative_ones, m, temp);
+	vsAdd(length, positive_ones, inter, res);
+	vsPow(length, res, temp, res);
+
+	vsSub(length, thetam, thetar, temp);
+	vsMul(length, temp, res, res);
+	vsAdd(length, thetar, res, res);
+
 	for (long i = 0; i < length; ++i)
 	{
 		label[i] = h[i] < hs[i] ? true : false;
-		inter[i] = label[i] ? pow(-alpha[i] * h[i], n[i]) : 0;
-		res[i] = label[i] ? (thetam[i] - thetar[i]) * pow(1 + inter[i], -m[i]) + thetar[i] : thetas[i];
+
+		if (!label[i])
+		{
+			res[i] = thetas[i];
+		}
 	}
 }
 
 void VGM::capacity(float* h, float* theta, float* res)
 {
+	vsSub(length, positive_ones, n, temp);
+	vsSub(length, theta, thetar, res);
+	vsMul(length, res, temp, res);
+	vsMul(length, res, inter, res);
+	vsAdd(length, inter, positive_ones, temp);
+	vsDiv(length, res, temp, res);
+	vsDiv(length, res, h, res);
+
 	for (long i = 0; i < length; ++i)
 	{
-		res[i] = label[i] ? (1 - n[i]) * (theta[i] - thetar[i]) * inter[i] / (inter[i] + 1) / h[i] : 0;
+		if (!label[i])
+		{
+			res[i] = 0;
+		}
 	}
 }
 
 void VGM::conductivity(float* theta, float* res)
 {
+	vsSub(length, theta, thetar, res);
+	vsSub(length, thetas, thetar, temp);
+	vsDiv(length, res, temp, res);
+	vsSqr(length, res, res);
+	vsMul(length, res, ksat, res);
+
+	vsAdd(length, positive_ones, inter, temp);
+	vsDiv(length, inter, temp, temp);
+	vsPow(length, temp, m, temp);
+	vsSub(length, positive_ones, temp, temp);
+	vsDiv(length, temp, F1, temp);
+	vsMul(length, temp, temp, temp);
+	vsMul(length, res, temp, res);
+
 	for (long i = 0; i < length; ++i)
 	{
-		res[i] = label[i] ? ksat[i] * sqrt((theta[i] - thetar[i]) / (thetas[i] - thetar[i])) *
-			pow((1 - pow(inter[i] / (1 + inter[i]), m[i])) / (1 - F1[i]), 2) : ksat[i];
+		if (!label[i])
+		{
+			res[i] = ksat[i];
+		}
 	}
 }
 

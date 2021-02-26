@@ -18,8 +18,17 @@ void Solution::Flux(float * h, float * conductivity, float * flux)
 	flux[length - 1] = -0.5 * (conductivity[length - 1] + conductivity[length - 2]) * (h[length - 1] - h[length - 2] - 1);
 }
 
-void Solution::Solve(Solute& solution, float* h, float* hn, const float& dt)
+void Solution::Velocity(float* flux, float* theta, float* velocity)
 {
+	for (long i = 0; i < length; ++i)
+	{
+		velocity[i] = flux[i] / theta[i];
+	}
+}
+
+void Solution::Solve(Solute& solution, Water& water_o, Water& water_n, const float& dt)
+{
+
 	soil->theta(h, theta);
 	soil->conductivity(theta, conductivity);
 	solution.difussion(velocity, theta, Dsh);

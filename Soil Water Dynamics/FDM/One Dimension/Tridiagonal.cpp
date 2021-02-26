@@ -1,5 +1,30 @@
 #include "Tridiagonal.h"
 
+Vector::Vector(const std::vector<float>& data) 
+    : length(data.size()), data((float*)MKL_calloc(length, sizeof(float), 64))
+{    
+    for (long i = 0; i < length; ++i)
+    {
+        this->data[i] = data[i];
+    }
+}
+
+Vector::Vector(const Vector& vec) : 
+    length(vec.length), data((float*)MKL_calloc(length, sizeof(float), 64))
+{
+    cblas_scopy(length, vec.data, length, data, length);
+}
+
+Vector::~Vector()
+{
+    MKL_free(data);
+}
+
+float& Vector::operator[] (const long& index)
+{
+    return data[index];
+}
+
 Tridiagonal::Tridiagonal(const long& length)
     : length(length), B(new float[length]),
       A(new float[length - 1]), C(new float[length - 1])
@@ -54,7 +79,7 @@ void Tridiagonal::multiple (float* x, float * res)
     res[length - 1] = A[length - 2] * x[length - 2] + B[length - 1] * x[length - 1];
 }
 
-inline float Norm(float* A, float* B, const long& length)
+float Norm(float* A, float* B, const long& length)
 {
     float norm = -INFINITY;
 
@@ -68,24 +93,28 @@ inline float Norm(float* A, float* B, const long& length)
 
 void Chasing(Tridiagonal& A, float* b, const long& length)
 {
-    float* m = A.Diagonal(0);
-    float* l = A.Diagonal(-1);
-    float* u = A.Diagonal(1);
+    float* m = nullptr;
+    float* l = nullptr;
+    float* u = nullptr;
 
-    for (size_t i = 1; i < length; ++i)
+    m = A.Diagonal(0);
+    l = A.Diagonal(-1);
+    u = A.Diagonal(1);
+
+    for (long i = 1; i < length; ++i)
     {
         l[i - 1] /= m[i - 1];
         m[i] -= u[i - 1] * l[i - 1];
     }
 
-    for (size_t i = 1; i < length; ++i)
+    for (long i = 1; i < length; ++i)
     {
         b[i] -= l[i - 1] * b[i - 1];
     }
 
     b[length - 1] /= m[length - 1];
 
-    for (size_t i = length - 2; i != 0; --i)
+    for (long i = length - 2; i != 0; --i)
     {
         b[i] = (b[i] - u[i]/*A(i, i + 1)*/ * b[i + 1]) / m[i];
     }

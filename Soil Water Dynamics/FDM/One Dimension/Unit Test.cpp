@@ -6,6 +6,10 @@
 
 void main()
 {
+    std::vector<float> v {3, 3, 4, 5};
+    Vector vec(v);
+    vec[3];
+
     Tridiagonal A(4);
 
     A(0, 0) =  2; A(0, 1) = -1;
@@ -64,12 +68,14 @@ void main()
 
 #ifdef _Solver_Test_
 
+#include "Modified Van Genutchen.h"
 #include "Solver.h"
 #include <iostream>
 #include <fstream>
 
 void main()
 {
+/*
     std::list<float> compart(6, 20.0f);
     std::list<float> thetas{ 0.360f, 0.370f,  0.376f, 0.375f, 0.371f, 0.370f };
     std::list<float> thetar{ 0.044f, 0.044f, 0.050f, 0.050f, 0.039f, 0.029f };
@@ -77,27 +83,35 @@ void main()
     std::list<float> n{ 1.59f, 1.40f, 1.48f, 1.45f, 1.32f, 1.30f };
     std::list<float> ksat{ 20.9f, 24.6f, 25.9f, 17.0f, 25.3f, 32.2f };
     std::list<float> hs(6, -2.0f);
+*/
+    std::list<float> compart{ 100.0 };
+    std::list<float> thetas{ 0.41 };
+    std::list<float> thetar{ 0.065 };
+    std::list<float> alpha{ 0.075 };
+    std::list<float> n{ 1.89 };
+    std::list<float> ksat{ 4.34 };
+    std::list<float> hs{ -2 };
+
 
     Soil* soil = new VGM(std::array<std::list<float>, 7>{compart, thetas, thetar, alpha, n, ksat, hs});
 
     Boundary* upper = new First(0, -2.0f);
-    Boundary* lower = new First(soil->size(), -3500.0f);
+    Boundary* lower = new First(soil->size(), -350.0f);
 
     Sink* sink = new Sink();
 
-    float* h = new float[soil->size()];
-    float* theta = new float[soil->size()];
-    float* flux = new float[soil->size()];
+    float* h = (float*) MKL_calloc(soil->size(), sizeof(float), 64);
+    float* theta = (float*) MKL_calloc(soil->size(), sizeof(float), 64);
+    float* flux = (float*) MKL_calloc(soil->size(), sizeof(float), 64);
 
     for (long i = 0; i < soil->size(); ++i)
     {
-        h[i] = -3500.0f;
+        h[i] = -350.0f;
     }
 
-    h[0] = -2.0f;
     soil->theta(h, theta);
 
-    Solver solver(soil);
+    Solver* solver = new Picard(soil);
 
     std::ofstream THETA("theta.txt");
     std::ofstream H("potential.txt");
@@ -108,12 +122,12 @@ void main()
     {
         float dt = fminf(1.0f, 6.0f - t);
         
-        while (!solver.Solve(h, theta, dt, sink, upper, lower))
+        while (!solver->Solve(h, theta, dt, sink, upper, lower))
         {
             dt *= 0.5;
         }
 
-        solver.Flux(theta[0], dt, flux);
+       // solver->Flux(theta[0], dt, flux);
 
         soil->theta(h, theta);
 
@@ -136,9 +150,10 @@ void main()
     delete upper;
     delete lower;
     delete sink;
+    delete solver;
 
-    delete[] theta;
-    delete[] h;
-    delete[] flux;
+    MKL_free(theta);
+    MKL_free(h);
+    MKL_free(flux);
 }
 #endif

@@ -1,6 +1,11 @@
 #include <list>
 #include <array>
 
+class Matrix
+{
+
+};
+
 struct Node
 {
 	float x, y, z;
@@ -9,14 +14,30 @@ struct Node
 class Volumn
 {
 private:
-	
-	float theta, temperature;	
+
+	float theta, temperature;
 	std::list<float> solutes;
 
-// tetrahedrold Volumn
+	// tetrahedrold Volumn
 	std::array<Node, 4> nodes;
 
-	std::list<Volumn*> conjunctions;
+	Node center;
+	std::list<Volumn*> contiguities;
 public:
+	Volumn(const Node&);
+};
 
+//Mesh is a dense matrix
+class Mesh
+{
+private:
+	Node* nodes;
+	const long length;
+
+public:
+	Mesh();
+	~Mesh();
+
+	Node& operator()(const long& x, const long& n y, const long& z);
+	Volumn& operator()(const long& x, const long& n y, const long& z);
 };
