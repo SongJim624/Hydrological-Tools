@@ -17,41 +17,45 @@
 //especially the plant uptake
 #include "Sink.h"
 
-class Solver
+#include "States.h"
+
+#include <string>
+#include <map>
+#include <array>
+
+class Water
 {
 public:
-    virtual bool Solve(float* h, float* theta0, const float& dt,
+    virtual bool Solve(States& Old, States& New, const float& dt,
         Sink* sink, Boundary* upper, Boundary* lower) = 0;
-    virtual ~Solver() {};
+    virtual void Flux(States& Old, States& New, const float& dt) = 0;
+    virtual ~Water() {};
 };
 
-class Picard : public Solver
+class Ion
 {
 private:
-    Soil* soil;
-    
-    long length;
-
-    const float maxIter;
-    const float tol;
-
-    Tridiagonal A;
-    float* f, * theta, * capacity, * conductivity, * s;
-    float* temp, * positive_ones, * negative_ones, * half, * dt;
-
+    float lambda, Do, a, b;
 public:
-    Picard(Soil* soil, const long& maxIter = 20, const float& tol = 0.01);
-    ~Picard();
-
-    virtual bool Solve(float* h, float* theta0, const float& dt,
-        Sink* sink, Boundary* upper, Boundary* lower);
-    void Flux(const float& theta0, const float& dt, float* flux);
+    Ion(const std::array<float, 4>& parameters);
+    void diffusion(float* velocity, float* theta, float* dsh, const long& length);
 };
 
-/*
-class Newton : public Solver
+class Solute
+{
+protected:
+    std::map<std::string, Ion*> ions;
+
+public:
+
+    virtual ~Solute() {};
+    
+    virtual bool Solve(States& Old, States& New, const float& dt, 
+        Sink* sink, Boundary* upper, Boundary* lower) = 0;
+};
+
+class Heat
 {
 
 };
-*/
 #endif // !_HYDROLOGICAL_TOOLS_SOIL_WATER_DYNAMICS_ONE_DIMENSION_SOLVER_

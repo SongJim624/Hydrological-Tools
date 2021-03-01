@@ -1,5 +1,5 @@
-#include "Solution.h"
-
+//#include "Solution.h"
+/*
 Solution::Solution(const long& length) 
 	: length(length), A(Tridiagonal(length)), B(Tridiagonal(length))
 {}
@@ -80,3 +80,4 @@ void Solution::Solve(Solute& solution, Water& water_o, Water& water_n, const flo
 		solution.concentration[i] = f[i];
 	}
 }
+*/

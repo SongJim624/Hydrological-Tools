@@ -1,30 +1,5 @@
 #include "Tridiagonal.h"
 
-Vector::Vector(const std::vector<float>& data) 
-    : length(data.size()), data((float*)MKL_calloc(length, sizeof(float), 64))
-{    
-    for (long i = 0; i < length; ++i)
-    {
-        this->data[i] = data[i];
-    }
-}
-
-Vector::Vector(const Vector& vec) : 
-    length(vec.length), data((float*)MKL_calloc(length, sizeof(float), 64))
-{
-    cblas_scopy(length, vec.data, length, data, length);
-}
-
-Vector::~Vector()
-{
-    MKL_free(data);
-}
-
-float& Vector::operator[] (const long& index)
-{
-    return data[index];
-}
-
 Tridiagonal::Tridiagonal(const long& length)
     : length(length), B(new float[length]),
       A(new float[length - 1]), C(new float[length - 1])
@@ -69,6 +44,7 @@ long Tridiagonal::size()
 
 void Tridiagonal::multiple (float* x, float * res)
 {
+/*
     res[0] = B[0] * x[0] + C[0] * x[1];
 
     for(long i = 1; i < length - 1; ++i)
@@ -77,6 +53,18 @@ void Tridiagonal::multiple (float* x, float * res)
     }
 
     res[length - 1] = A[length - 2] * x[length - 2] + B[length - 1] * x[length - 1];
+*/
+    float* temp = (float*)MKL_calloc(length, sizeof(float), 64);
+
+    vsMul(length, B, x, res);
+
+    vsMul(length - 1, C, x + 1, temp);
+    vsAdd(length - 1, temp, res, res);
+
+    vsMul(length - 1, A, x, temp);
+    vsAdd(length - 1, res + 1, temp, res + 1);
+
+    MKL_free(temp);
 }
 
 float Norm(float* A, float* B, const long& length)
@@ -93,12 +81,13 @@ float Norm(float* A, float* B, const long& length)
 
 void Chasing(Tridiagonal& A, float* b, const long& length)
 {
-    float* m = nullptr;
-    float* l = nullptr;
-    float* u = nullptr;
+    float* l = (float *)MKL_calloc(length - 1, sizeof(float), 64);
+    cblas_scopy(length - 1, A.Diagonal(-1), 1, l, 1);
 
-    m = A.Diagonal(0);
-    l = A.Diagonal(-1);
+    float* m = (float *)MKL_calloc(length, sizeof(float), 64);
+    cblas_scopy(length, A.Diagonal(0), 1, m, 1);
+    
+    float* u = nullptr;
     u = A.Diagonal(1);
 
     for (long i = 1; i < length; ++i)
@@ -120,4 +109,7 @@ void Chasing(Tridiagonal& A, float* b, const long& length)
     }
 
     b[0] = (b[0] - u[0] * b[1]) / m[0];
+
+    MKL_free(m);
+    MKL_free(l);
 }

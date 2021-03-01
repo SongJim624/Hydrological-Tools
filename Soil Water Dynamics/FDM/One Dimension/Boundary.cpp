@@ -29,8 +29,8 @@ void First::Upper(Tridiagonal& A, float* f, const float& dt)
     A(0, 0) = 1;
     f[0] = head;
 
-    f[1] -= f[0] * A(1, 0);
-    A(1, 0) = 0;
+//    f[1] -= f[0] * A(1, 0);
+//    A(1, 0) = 0;
 }
 
 void First::Lower(Tridiagonal& A, float* f, const float& dt)
@@ -38,8 +38,8 @@ void First::Lower(Tridiagonal& A, float* f, const float& dt)
     A(length - 1, length - 1) = 1;
     f[length - 1] = head;
 
-    f[length - 2] -= f[length - 1] * A(length - 2, length - 1);
-    A(length - 2, length - 1) = 0;
+//    f[length - 2] -= f[length - 1] * A(length - 2, length - 1);
+//    A(length - 2, length - 1) = 0;
 }
 
 void First::Modify(Tridiagonal& A, float* f, const float& dt)
