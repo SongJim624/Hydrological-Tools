@@ -5,16 +5,16 @@ struct Coordinate
     float x, y, z;
 };
 
+struct Climate
+{
+    float Tmax, Tmin, Pre, U2, Rad;
+};
+
 class Soil
 {
 
 };
 
-class Climate
-{
-private:
-    std::list<float> Tmaxs, Tmins, ETos, Rads;
-};
 
 class Solute
 {
@@ -27,16 +27,19 @@ public:
 
 class HRU
 {
+private:
+    float Area;
+    std::list<Coordinate> boundary;
 //Components    
 private:
     Climate climate;
     Soil soil;
 
+    
+    
+    
 //States
 private:
-    float* theta;
-    std::list<Solute> solutes;
-    float snow;
 
 public:
 
